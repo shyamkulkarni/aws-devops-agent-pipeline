@@ -19,12 +19,10 @@ ext {
 }
 
 dependencies {
-    
-    implementation 'ch.qos.logback:logback-classic:1.4.14'
+    // Let Spring Boot manage logback, slf4j, and jackson versions to avoid conflicts
+    // with OpenTelemetry Java agent
     implementation 'ch.qos.logback.contrib:logback-jackson:0.1.5'
     implementation 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.0'
-    implementation 'org.slf4j:slf4j-api:2.0.9'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.ehcache:ehcache:3.10.8'

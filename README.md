@@ -66,42 +66,55 @@ git remote add github https://github.com/YOUR_USERNAME/YOUR_REPO.git
 git push github main
 ```
 
-### Step 1.3: Run the Deployment Script
+### Step 1.3: Deploy the CodePipeline Stack
+
+Deploy the infrastructure using AWS CloudFormation:
 
 ```bash
-# Navigate to the workshop directory
-cd one-observability-demo
-
-# Make the script executable (if needed)
-chmod +x deploy-workshop.sh
-
-# Run the deployment
-./deploy-workshop.sh
+aws cloudformation create-stack \
+  --stack-name OneObservabilityWorkshop \
+  --template-body file://codepipeline-stack.yaml \
+  --parameters \
+    ParameterKey=CodeStarConnectionArn,ParameterValue="YOUR_CODESTAR_CONNECTION_ARN" \
+    ParameterKey=GitHubRepoOwner,ParameterValue="YOUR_GITHUB_USERNAME" \
+    ParameterKey=GitHubRepoName,ParameterValue="YOUR_REPO_NAME" \
+    ParameterKey=GitHubBranch,ParameterValue="main" \
+    ParameterKey=UserRoleArn,ParameterValue="arn:aws:iam::YOUR_ACCOUNT_ID:role/Admin" \
+  --capabilities CAPABILITY_IAM
 ```
 
-The script will prompt you for:
-- **GitHub Repository Owner** - your username or organization
-- **GitHub Repository Name** - your repo name
-- **GitHub Branch** - branch to use (default: main)
-- **CodeStar Connection ARN** - from Step 1.1
+Replace the following values:
+- `YOUR_CODESTAR_CONNECTION_ARN` - from Step 1.1
+- `YOUR_GITHUB_USERNAME` - your GitHub username or organization
+- `YOUR_REPO_NAME` - your repository name
+- `YOUR_ACCOUNT_ID` - your AWS account ID
 
-Deployment takes approximately **60-90 minutes**.
+Monitor the stack creation:
+
+```bash
+aws cloudformation describe-stacks --stack-name OneObservabilityWorkshop \
+  --query 'Stacks[0].StackStatus' --output text
+```
+
+The pipeline will automatically trigger and deploy the Services stack. Total deployment takes approximately **60-90 minutes**.
 
 ### Step 1.4: Verify Application URLs
 
 After deployment completes, get the application URLs:
 
 ```bash
-# Get all PetStore application URLs and health status
-./workshop-scenarios/get-urls.sh
+# Get all service URLs from the Services stack
+aws cloudformation describe-stacks --stack-name Services \
+  --query 'Stacks[0].Outputs[?contains(OutputKey, `URL`) || contains(OutputKey, `Url`)].{Key:OutputKey,Value:OutputValue}' \
+  --output table
 ```
 
 This will display:
-- **PetSite** - Main web UI
-- **PetSearch API** - Search service (used in scenarios)
-- **PetListAdoptions** - Adoption listing service
-- **PayForAdoption** - Payment service
-- **Traffic Generator** - Load generator
+- **PetSiteUrl** - Main web UI
+- **searchserviceecsserviceServiceURL** - Search service
+- **listadoptionsserviceecsserviceServiceURL** - Adoption listing service
+- **payforadoptionserviceecsserviceServiceURL** - Payment service
+- **trafficgeneratorserviceecsserviceServiceURL** - Load generator
 
 ### Step 1.5: Save Configuration
 

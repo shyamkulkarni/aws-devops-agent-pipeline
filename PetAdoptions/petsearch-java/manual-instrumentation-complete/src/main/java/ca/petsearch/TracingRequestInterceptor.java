@@ -8,7 +8,7 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import io.opentelemetry.context.propagation.TextMapGetter;
-import io.opentelemetry.semconv.trace.attributes.SemanticAttributes;
+import io.opentelemetry.api.common.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -23,6 +23,13 @@ public class TracingRequestInterceptor implements HandlerInterceptor {
 
     private Tracer tracer;
     private OpenTelemetry openTelemetry;
+    
+    // Define attribute keys for HTTP semantic conventions
+    private static final AttributeKey<String> HTTP_METHOD = AttributeKey.stringKey("http.method");
+    private static final AttributeKey<String> HTTP_SCHEME = AttributeKey.stringKey("http.scheme");
+    private static final AttributeKey<String> NET_HOST_NAME = AttributeKey.stringKey("net.host.name");
+    private static final AttributeKey<String> HTTP_TARGET = AttributeKey.stringKey("http.target");
+    private static final AttributeKey<Long> HTTP_STATUS_CODE = AttributeKey.longKey("http.status_code");
 
     public TracingRequestInterceptor(OpenTelemetry openTelemetry, Tracer tracer) {
         this.tracer = tracer;
@@ -68,11 +75,11 @@ public class TracingRequestInterceptor implements HandlerInterceptor {
             span.setStatus(StatusCode.ERROR);
             span.recordException(ex);
         }
-        span.setAttribute(SemanticAttributes.HTTP_METHOD, request.getMethod());
-        span.setAttribute(SemanticAttributes.HTTP_SCHEME, request.getScheme());
-        span.setAttribute(SemanticAttributes.NET_HOST_NAME, request.getRemoteHost());
-        span.setAttribute(SemanticAttributes.HTTP_TARGET, request.getRequestURI());
-        span.setAttribute(SemanticAttributes.HTTP_STATUS_CODE, response.getStatus());
+        span.setAttribute(HTTP_METHOD, request.getMethod());
+        span.setAttribute(HTTP_SCHEME, request.getScheme());
+        span.setAttribute(NET_HOST_NAME, request.getRemoteHost());
+        span.setAttribute(HTTP_TARGET, request.getRequestURI());
+        span.setAttribute(HTTP_STATUS_CODE, (long) response.getStatus());
 
         scope.close();
         span.end();
